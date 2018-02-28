@@ -14,14 +14,17 @@
 # limitations under the License.
 
 import datetime
+import io
+import pickle
 from collections import OrderedDict
 from contextlib import contextmanager
 from os import sep, path, remove
 from urllib.request import urlopen
 
-from nexusproto import DataTile_pb2 as nexusproto
 import numpy
+import xarray
 from netCDF4 import Dataset, num2date
+from nexusproto import DataTile_pb2 as nexusproto
 from nexusproto.serialization import to_shaped_array, to_metadata
 from pytz import timezone
 
@@ -227,7 +230,13 @@ class TimeSeriesReadingProcessor(TileReadingProcessor):
         # Time is required for swath data
         self.time = time
 
+        # xarray prototype
+        self.use_xarray = self.environ.get('XARRAY', False)
+
     def read_data(self, tile_specifications, file_path, output_tile):
+        if self.use_xarray:
+            x_ds = xarray.open_dataset(file_path, decode_times=True)
+
         with Dataset(file_path) as ds:
             for section_spec, dimtoslice in tile_specifications:
                 tile = nexusproto.TimeSeriesTile()
@@ -260,5 +269,15 @@ class TimeSeriesReadingProcessor(TileReadingProcessor):
                                                   timeoffset=self.time_offset)
 
                 output_tile.tile.time_series_tile.CopyFrom(tile)
+
+                if x_ds:
+                    indexer = {dim: range(s.start, s.stop) for dim, s in dimtoslice.items()}
+                    tile = x_ds.isel(**indexer)
+
+                    tile_data = io.BytesIO()
+                    pickle.dump(tile, tile_data, protocol=pickle.HIGHEST_PROTOCOL)
+                    tile_data_b = tile_data.getvalue()
+
+                    output_tile.tile.xarray_data = tile_data_b
 
                 yield output_tile

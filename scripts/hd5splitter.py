@@ -71,7 +71,7 @@ def netcdf_subset(source, dest):
 
     dest.setncatts(source.__dict__)
 
-    for variable in [v for v in source.variables if v in ['Qout', TIME, LONGITUDE, LATITUDE]]:
+    for variable in [v for v in source.variables if v in ['rivid', 'Qout', TIME, LONGITUDE, LATITUDE]]:
         variable = source[variable]
 
         if variable.name == TIME:
@@ -83,6 +83,10 @@ def netcdf_subset(source, dest):
             dest[variable.name].setncatts(variable.__dict__)
             dvar[:] = variable[LONGITUDE_SLICE]
         elif variable.name == LATITUDE:
+            dvar = dest.createVariable(varname=variable.name, datatype=variable.dtype, dimensions=(drivid.name,))
+            dest[variable.name].setncatts(variable.__dict__)
+            dvar[:] = variable[LATITUDE_SLICE]
+        elif variable.name == 'rivid':
             dvar = dest.createVariable(varname=variable.name, datatype=variable.dtype, dimensions=(drivid.name,))
             dest[variable.name].setncatts(variable.__dict__)
             dvar[:] = variable[LATITUDE_SLICE]
@@ -99,11 +103,11 @@ def netcdf_subset(source, dest):
 from netCDF4 import Dataset
 
 LATITUDE = 'lat'
-LATITUDE_SLICE = slice(0, 1000)
+LATITUDE_SLICE = slice(514650, 514693)
 LONGITUDE = 'lon'
-LONGITUDE_SLICE = slice(0, 1000)
+LONGITUDE_SLICE = slice(514650, 514693)
 TIME = 'time'
-TIME_SLICE = slice(0, 1)
+TIME_SLICE = slice(0, 5832)
 
 hinput = Dataset(
     '/Users/greguska/data/swot_example/latest/Qout_WSWM_729days_p0_dtR900s_n1_preonly_20160416.nc',
