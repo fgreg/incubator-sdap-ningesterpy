@@ -231,7 +231,7 @@ class TimeSeriesReadingProcessor(TileReadingProcessor):
         self.time = time
 
         # xarray prototype
-        self.use_xarray = self.environ.get('XARRAY', False)
+        self.use_xarray = bool(self.environ.get('XARRAY', False))
 
     def read_data(self, tile_specifications, file_path, output_tile):
         if self.use_xarray:
@@ -270,7 +270,7 @@ class TimeSeriesReadingProcessor(TileReadingProcessor):
 
                 output_tile.tile.time_series_tile.CopyFrom(tile)
 
-                if x_ds:
+                if self.use_xarray:
                     indexer = {dim: range(s.start, s.stop) for dim, s in dimtoslice.items()}
                     tile = x_ds.isel(**indexer)
 
