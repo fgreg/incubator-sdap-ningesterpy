@@ -235,7 +235,7 @@ class TimeSeriesReadingProcessor(TileReadingProcessor):
 
     def read_data(self, tile_specifications, file_path, output_tile):
         if self.use_xarray:
-            x_ds = xarray.open_dataset(file_path, decode_times=True)
+            x_ds = xarray.open_dataset(file_path, decode_times=False)
 
         with Dataset(file_path) as ds:
             for section_spec, dimtoslice in tile_specifications:
@@ -275,7 +275,7 @@ class TimeSeriesReadingProcessor(TileReadingProcessor):
                     tile = x_ds.isel(**indexer)
 
                     tile_data = io.BytesIO()
-                    pickle.dump(tile, tile_data, protocol=pickle.HIGHEST_PROTOCOL)
+                    pickle.dump(tile, tile_data, protocol=2)
                     tile_data_b = tile_data.getvalue()
 
                     output_tile.tile.xarray_data = tile_data_b
